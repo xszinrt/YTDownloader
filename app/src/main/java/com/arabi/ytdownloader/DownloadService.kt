@@ -12,6 +12,7 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -21,7 +22,8 @@ class DownloadService : Service() {
         private const val NOTIFICATION_ID = 1001
     }
 
-    private val serviceScope = CoroutineScope(Dispatchers.IO)
+    private val serviceJob = Job()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val url = intent?.getStringExtra("url") ?: return START_NOT_STICKY
@@ -91,6 +93,6 @@ class DownloadService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        serviceScope.coroutineContext.cancel()
+        serviceJob.cancel()  // ✅ التصحيح الصحيح
     }
 }
