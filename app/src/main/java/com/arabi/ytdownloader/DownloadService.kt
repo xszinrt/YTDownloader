@@ -17,12 +17,16 @@ import java.io.File
 
 class DownloadService : Service() {
 
+    companion object {
+        private const val NOTIFICATION_ID = 1001
+    }
+
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val url = intent?.getStringExtra("url") ?: return START_NOT_STICKY
 
-        startForeground(YtDlpApplication.NOTIFICATION_ID, createNotification("بدء التحميل...", 0))
+        startForeground(NOTIFICATION_ID, createNotification("بدء التحميل...", 0))
 
         serviceScope.launch {
             try {
@@ -42,7 +46,6 @@ class DownloadService : Service() {
             addOption("--no-playlist")
         }
 
-        // ✅ التصحيح: استخدام 3 معاملات (progress, eta, line)
         val response = YoutubeDL.getInstance().execute(request) { progress, eta, line ->
             val percent = progress.toInt()
             updateNotification("تحميل: $percent%", percent)
@@ -58,15 +61,14 @@ class DownloadService : Service() {
             }
         }
 
-        // إيقاف الخدمة بعد 5 ثواني
-        Thread.sleep(5000)
+        Thread.sleep(3000)
         stopForeground(true)
         stopSelf()
     }
 
     private fun updateNotification(text: String, progress: Int) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(YtDlpApplication.NOTIFICATION_ID, createNotification(text, progress))
+        manager.notify(NOTIFICATION_ID, createNotification(text, progress))
     }
 
     private fun createNotification(text: String, progress: Int): Notification {
@@ -75,7 +77,7 @@ class DownloadService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, YtDlpApplication.CHANNEL_ID)
+        return NotificationCompat.Builder(this, "download_channel")
             .setContentTitle("📥 تحميل فيديو")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.stat_sys_download)
